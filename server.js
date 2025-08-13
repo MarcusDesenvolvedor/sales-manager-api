@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import monthlySales from "./monthlySales.js";
+import { body, validationResult } from "express-validator";
 
 dotenv.config();
 
@@ -22,22 +23,75 @@ const connectDB = async () => {
 connectDB();
 
 //CREATE
-app.post("/sales", async (req, res) => {
-  try {
-    const newMonthlySale = await monthlySales.create(req.body);
-    res.json(newMonthlySale);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+app.post(
+  "/sales",
+  [
+    body("sellerName")
+      .isString()
+      .withMessage("sellerName must be a string")
+      .isLength({ min: 3 })
+      .withMessage("sellerName must have at least 3 characters")
+      .notEmpty()
+      .withMessage("sellerName is required"),
+
+    body("totalSold")
+      .isNumeric()
+      .withMessage("totalSold must be a number")
+      .custom((value) => value > 0)
+      .withMessage("totalSold must be greater than 0"),
+
+    body("month")
+      .isString()
+      .withMessage("month must be a string")
+      .customSanitizer((value) => {
+        if (!value) return value;
+        return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+      })
+      .isIn([
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ])
+      .withMessage("month must be a valid month name"),
+
+    body("year")
+      .isInt({ min: 2000 })
+      .withMessage("year must be an integer greater than or equal to 2000"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const newMonthlySale = await monthlySales.create(req.body);
+      res.json(newMonthlySale);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
-});
+);
 
 //READ
 app.get("/listSales", async (req, res) => {
   try {
     const listSales = await monthlySales.find();
+    if(listSales.length === 0) {
+      return res.status(404).json({error: "No sales found"})
+    }
     res.json(listSales);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -51,7 +105,7 @@ app.put("/changeSale/:id", async (req, res) => {
     );
     res.json(changeMonthSale);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -61,7 +115,7 @@ app.delete("/deleteSale/:id", async (req, res) => {
     await monthlySales.findByIdAndDelete(req.params.id);
     res.send(`Sale id: ${req.params.id} successfully deleted`);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
