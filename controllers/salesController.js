@@ -25,8 +25,13 @@ export const getSales = async (req, res) => {
       lastChangeEnd,
       creationDateStart,
       creationDateEnd,
-      sortField = "creationDate",
-      sortOrder = "desc",
+      allowedSortFields = [
+        "creationDate",
+        "lastChange",
+        "year",
+        "month",
+        "totalSold",
+      ],
     } = req.query;
 
     const skip = (page - 1) * limit;
@@ -38,6 +43,10 @@ export const getSales = async (req, res) => {
       if (end) range.$lte = new Date(end);
       return Object.keys(range).length ? range : null;
     };
+
+    const sortField = allowedSortFields.includes(req.query.sortField) ? req.query.sortField : "creationDate";
+
+    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
 
     const lastChangeRange = dateFilter(lastChangeStart, lastChangeEnd);
     if (lastChangeRange) filters.lastChange = lastChangeRange;
@@ -54,7 +63,7 @@ export const getSales = async (req, res) => {
     const [totalSales, sales] = await Promise.all([
       MonthlySales.countDocuments(filters),
       MonthlySales.find(filters)
-        .sort({ [sortField]: sortOrder === "asc" ? 1 : -1 })
+        .sort({ [sortField]: sortOrder})
         .skip(parseInt(skip))
         .limit(parseInt(limit)),
     ]);

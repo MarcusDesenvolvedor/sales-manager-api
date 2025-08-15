@@ -20,26 +20,14 @@ export const saleCreateValidation = [
     .withMessage("Must be greater than 0"),
 
   body("month")
-    .isString()
-    .withMessage("Month must be a string")
-    .customSanitizer(
-      (value) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
-    )
-    .isIn([
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ])
-    .withMessage("Invalid month name"),
+    .isNumeric()
+    .withMessage("Month must be a number")
+    .isInt({ max: 12 })
+    .withMessage("Month must be less than or equal to 12")
+    .isLength({ min: 1, max: 2 })
+    .withMessage("City must be between 1 and 2 characters long.")
+    .custom((value) => value > 0)
+    .withMessage("Month Must be greater than 0"),
 
   body("year")
     .isInt({ min: 2000 })
@@ -75,29 +63,29 @@ export const saleCreateValidation = [
     .notEmpty()
     .withMessage("Birth date is required")
     .custom((value) => {
-    const birthDate = new Date(value);
+      const birthDate = new Date(value);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-    if (birthDate > today) {
-      throw new Error("Birth date cannot be in the future");
-    }
+      if (birthDate > today) {
+        throw new Error("Birth date cannot be in the future");
+      }
 
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    const dayDiff = today.getDate() - birthDate.getDate();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      const dayDiff = today.getDate() - birthDate.getDate();
 
-    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-      age--;
-    }
+      if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+        age--;
+      }
 
-    if (age < 14) {
-      throw new Error("Seller must be at least 14 years old");
-    }
+      if (age < 14) {
+        throw new Error("Seller must be at least 14 years old");
+      }
 
-    return true;
-  })
+      return true;
+    }),
 ];
 
 export const saleUpdateValidation = [
@@ -118,27 +106,14 @@ export const saleUpdateValidation = [
 
   body("month")
     .optional()
-    .isString()
-    .withMessage("Month must be a string")
-    .customSanitizer(
-      (value) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
-    )
-    .isIn([
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ])
-    .withMessage("Invalid month name"),
-
+    .isNumeric()
+    .withMessage("Month must be a number")
+    .isInt({ max: 12 })
+    .withMessage("Month must be less than or equal to 12")
+    .isLength({ min: 1, max: 2 })
+    .withMessage("City must be between 1 and 2 characters long.")
+    .custom((value) => value > 0)
+    .withMessage("Month Must be greater than 0"),
   body("year")
     .optional()
     .isInt({ min: 2000 })
@@ -170,5 +145,5 @@ export const saleUpdateValidation = [
     .notEmpty()
     .withMessage("City is required")
     .isLength({ min: 2, max: 25 })
-    .withMessage("City must be between 2 and 25 characters long.")
+    .withMessage("City must be between 2 and 25 characters long."),
 ];

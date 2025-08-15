@@ -7,7 +7,7 @@ const monthlySalesSchema = new mongoose.Schema({
     min: 0.01,
     set: (v) => Math.round(v * 100) / 100,
   },
-  month: String,
+  month: Number,
   year: Number,
   creationDate: {
     type: Date,
