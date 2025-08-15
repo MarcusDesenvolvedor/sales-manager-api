@@ -20,6 +20,7 @@ const monthlySalesSchema = new mongoose.Schema({
   },
   additionalSellerInformation: [
     {
+      _id: false,
       email: String,
       country: String,
       state: String,

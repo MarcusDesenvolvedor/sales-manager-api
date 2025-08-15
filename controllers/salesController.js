@@ -13,11 +13,63 @@ export const createSale = async (req, res) => {
 // READ
 export const getSales = async (req, res) => {
   try {
-    const sales = await MonthlySales.find();
-    if (sales.length === 0) {
+    const {
+      page = 1,
+      limit = 100,
+      email,
+      country,
+      state,
+      city,
+      document,
+      lastChangeStart,
+      lastChangeEnd,
+      creationDateStart,
+      creationDateEnd,
+      sortField = "creationDate",
+      sortOrder = "desc",
+    } = req.query;
+
+    const skip = (page - 1) * limit;
+    const filters = {};
+
+    const dateFilter = (start, end) => {
+      const range = {};
+      if (start) range.$gte = new Date(start);
+      if (end) range.$lte = new Date(end);
+      return Object.keys(range).length ? range : null;
+    };
+
+    const lastChangeRange = dateFilter(lastChangeStart, lastChangeEnd);
+    if (lastChangeRange) filters.lastChange = lastChangeRange;
+
+    const creationDateRange = dateFilter(creationDateStart, creationDateEnd);
+    if (creationDateRange) filters.creationDate = creationDateRange;
+
+    if (email) filters["additionalSellerInformation.email"] = email;
+    if (country) filters["additionalSellerInformation.country"] = country;
+    if (state) filters["additionalSellerInformation.state"] = state;
+    if (city) filters["additionalSellerInformation.city"] = city;
+    if (document) filters["additionalSellerInformation.document"] = document;
+
+    const [totalSales, sales] = await Promise.all([
+      MonthlySales.countDocuments(filters),
+      MonthlySales.find(filters)
+        .sort({ [sortField]: sortOrder === "asc" ? 1 : -1 })
+        .skip(parseInt(skip))
+        .limit(parseInt(limit)),
+    ]);
+
+    if (!sales.length) {
       return res.status(404).json({ error: "No sales found" });
     }
-    res.json(sales);
+
+    res.json({
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalSales,
+      totalPages: Math.ceil(totalSales / limit),
+      sales,
+    });
   } catch (error) {
     res.status(500).json({ error: "Server error" });
   }
@@ -49,7 +101,7 @@ export const updateSale = async (req, res) => {
 };
 
 // DELETE
-export const deleteSale = async (req, res) => {
+export const deleteSaleById = async (req, res) => {
   try {
     const sale = await MonthlySales.findByIdAndDelete(req.params.id);
     if (!sale) {
