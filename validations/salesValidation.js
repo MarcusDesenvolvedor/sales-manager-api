@@ -41,7 +41,63 @@ export const saleCreateValidation = [
     ])
     .withMessage("Invalid month name"),
 
-  body("year").isInt({ min: 2000 }).withMessage("Year must be greater than 2000"),
+  body("year")
+    .isInt({ min: 2000 })
+    .withMessage("Year must be greater than 2000"),
+
+  body("additionalSellerInformation.*.email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Invalid email format"),
+
+  body("additionalSellerInformation.*.country")
+    .notEmpty()
+    .withMessage("Country is required"),
+
+  body("additionalSellerInformation.*.state")
+    .notEmpty()
+    .withMessage("State is required")
+    .isLength({ min: 2, max: 2 })
+    .withMessage("State must have exactly 2 characters"),
+
+  body("additionalSellerInformation.*.city")
+    .notEmpty()
+    .withMessage("City is required"),
+
+  body("additionalSellerInformation.*.document")
+    .notEmpty()
+    .withMessage("Document is required")
+    .isLength({ min: 11, max: 11 })
+    .withMessage("Document must have exactly 11 digits"),
+
+  body("additionalSellerInformation.*.birthDate")
+    .notEmpty()
+    .withMessage("Birth date is required")
+    .custom((value) => {
+    const birthDate = new Date(value);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (birthDate > today) {
+      throw new Error("Birth date cannot be in the future");
+    }
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const dayDiff = today.getDate() - birthDate.getDate();
+
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+      age--;
+    }
+
+    if (age < 14) {
+      throw new Error("Seller must be at least 14 years old");
+    }
+
+    return true;
+  })
 ];
 
 export const saleUpdateValidation = [
@@ -87,4 +143,32 @@ export const saleUpdateValidation = [
     .optional()
     .isInt({ min: 2000 })
     .withMessage("Year must be greater than or equal to 2000"),
+
+  body("additionalSellerInformation.*.email")
+    .optional()
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Invalid email format"),
+
+  body("additionalSellerInformation.*.country")
+    .optional()
+    .notEmpty()
+    .withMessage("Country is required")
+    .isLength({ min: 2, max: 2 })
+    .withMessage("Country must have exactly 2 characters"),
+
+  body("additionalSellerInformation.*.state")
+    .optional()
+    .notEmpty()
+    .withMessage("State is required")
+    .isLength({ min: 2, max: 2 })
+    .withMessage("State must have exactly 2 characters"),
+
+  body("additionalSellerInformation.*.city")
+    .optional()
+    .notEmpty()
+    .withMessage("City is required")
+    .isLength({ min: 2, max: 25 })
+    .withMessage("City must be between 2 and 25 characters long.")
 ];

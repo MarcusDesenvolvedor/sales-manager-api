@@ -26,7 +26,19 @@ export const getSales = async (req, res) => {
 // UPDATE
 export const updateSale = async (req, res) => {
   try {
-    const sale = await MonthlySales.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (req.body.additionalSellerInformation) {
+      for (const info of req.body.additionalSellerInformation) {
+        if (info.document || info.birthDate) {
+          return res.status(400).json({
+            error: "Customer document and birth date cannot be changed",
+          });
+        }
+      }
+    }
+
+    const sale = await MonthlySales.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
     if (!sale) {
       return res.status(404).json({ error: "Sale not found" });
     }
