@@ -1,9 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import monthlySales from "./models/monthlySales.js";
-import { body, validationResult, param } from "express-validator";
 import salesRoutes from "./routes/salesRoutes.js"
+import authRoutes from "./routes/authRoutes.js"
 
 dotenv.config();
 
@@ -24,5 +23,6 @@ const connectDB = async () => {
 connectDB();
 
 app.use("/sales", salesRoutes);
+app.use("/auth", authRoutes);
 
 app.listen(port, () => console.log(`The server is running on port: ${port}`));
